@@ -362,14 +362,14 @@ class SegmentDescriptor
      */
     public function isOK()
     {
-        if (null != $this->_previous) {
-            $next = $this->_previous->getNext();
+        if (null != $this->previous) {
+            $next = $this->previous->getNext();
             if ($this != $next) {
                 return false;
             }
         }
-        if (null != $this->_next) {
-            $prev = $this->_next->getPrevious();
+        if (null != $this->next) {
+            $prev = $this->next->getPrevious();
             if ($this != $prev) {
                 return false;
             }

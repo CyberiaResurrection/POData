@@ -359,6 +359,11 @@ class UriProcessorNew implements IUriProcessor
     protected function executePost()
     {
         $segments = $this->getRequest()->getSegments();
+        foreach ($segments as $segment) {
+            if (!$segment->isOK()) {
+                throw new \InvalidArgumentException('Malformed segment received');
+            }
+        }
         $requestMethod = $this->getService()->getOperationContext()->incomingRequest()->getMethod();
 
         foreach ($segments as $segment) {
