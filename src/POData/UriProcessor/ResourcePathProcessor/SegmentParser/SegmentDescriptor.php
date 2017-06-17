@@ -356,4 +356,24 @@ class SegmentDescriptor
     {
         return null !== $this->keyDescriptor;
     }
+
+    /**
+     * @return bool true if next and previous segment links are either null or point back here
+     */
+    public function isOK()
+    {
+        if (null != $this->_previous) {
+            $next = $this->_previous->getNext();
+            if ($this != $next) {
+                return false;
+            }
+        }
+        if (null != $this->_next) {
+            $prev = $this->_next->getPrevious();
+            if ($this != $prev) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
