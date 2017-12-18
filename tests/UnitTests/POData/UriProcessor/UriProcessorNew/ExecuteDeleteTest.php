@@ -262,4 +262,74 @@ class ExecuteDeleteTest extends TestCase
         $this->assertEquals(1, count($remixSegments));
         $this->assertEquals($origSegments[0]->getResult(), $remixSegments[0]->getResult());
     }
+
+    public function testExecuteDeleteOnValidLink()
+    {
+        $baseUrl = new Url('http://localhost/odata.svc');
+        $reqUrl = new Url('http://localhost/odata.svc/customers(id=1)/$links/orders(id=1)');
+
+        $host = m::mock(ServiceHost::class);
+        $host->shouldReceive('getAbsoluteRequestUri')->andReturn($reqUrl);
+        $host->shouldReceive('getAbsoluteServiceUri')->andReturn($baseUrl);
+        $host->shouldReceive('getRequestVersion')->andReturn('1.0');
+        $host->shouldReceive('getRequestMaxVersion')->andReturn('3.0');
+        $host->shouldReceive('getQueryStringItem')->andReturn(null);
+        $host->shouldReceive('getRequestContentType')->andReturn(ODataConstants::FORMAT_ATOM)->atLeast(1);
+        $host->shouldReceive('setResponseStatusCode')->withArgs([HttpStatus::CODE_NOCONTENT])->once();
+
+        $request = m::mock(IHTTPRequest::class);
+        $request->shouldReceive('getMethod')->andReturn(HTTPRequestMethod::DELETE());
+        $request->shouldReceive('getAllInput')->andReturn(null);
+
+        $context = m::mock(IOperationContext::class);
+        $context->shouldReceive('incomingRequest')->andReturn($request);
+
+        $iType = m::mock(IType::class);
+        $iType->shouldReceive('isCompatibleWith')->andReturn(true)->atLeast(1);
+
+        $keyProp = m::mock(ResourceProperty::class);
+        $keyProp->shouldReceive('getInstanceType')->andReturn($iType);
+
+        $resourceType = m::mock(ResourceType::class);
+        $resourceType->shouldReceive('getName')->andReturn('Customer');
+        $resourceType->shouldReceive('getResourceTypeKind')->andReturn(ResourceTypeKind::ENTITY());
+        $resourceType->shouldReceive('getKeyProperties')->andReturn(['id' => $keyProp])->atLeast(1);
+        $resourceType->shouldReceive('getInstanceType->newInstance')->andReturn(new \stdClass())->atLeast(1);
+
+        $nuType = m::mock(ResourceType::class);
+        $nuType->shouldReceive('getName')->andReturn('Order');
+        $nuType->shouldReceive('getResourceTypeKind')->andReturn(ResourceTypeKind::ENTITY());
+        $nuType->shouldReceive('getKeyProperties')->andReturn(['id' => $keyProp])->atLeast(1);
+        $nuType->shouldReceive('getInstanceType->newInstance')->andReturn(new \stdClass())->atLeast(1);
+
+        $result = 'eins';
+
+        $resourceSet = m::mock(ResourceSetWrapper::class);
+        $resourceSet->shouldReceive('getResourceType')->andReturn($resourceType, $nuType);
+        $resourceSet->shouldReceive('checkResourceSetRightsForRead')->andReturnNull()->atLeast(1);
+        $resourceSet->shouldReceive('hasNamedStreams')->andReturn(false);
+        $resourceSet->shouldReceive('hasBagProperty')->andReturn(false);
+        $resourceSet->shouldReceive('getResourceSetPageSize')->andReturn(200);
+
+        $wrapper = m::mock(ProvidersWrapper::class);
+        $wrapper->shouldReceive('resolveSingleton')->andReturn(null);
+        $wrapper->shouldReceive('resolveResourceSet')->andReturn($resourceSet);
+        $wrapper->shouldReceive('getResourceFromResourceSet')->andReturn($result)->once();
+        $wrapper->shouldReceive('deleteResource')->with($resourceSet, m::any())->andReturnNull()->once();
+
+        $config = m::mock(IServiceConfiguration::class);
+        $config->shouldReceive('getMaxDataServiceVersion')->andReturn(new Version(3, 0));
+
+        $metaProv = m::mock(IMetadataProvider::class);
+
+        $service = m::mock(IService::class);
+        $service->shouldReceive('getHost')->andReturn($host);
+        $service->shouldReceive('getProvidersWrapper')->andReturn($wrapper);
+        $service->shouldReceive('getOperationContext')->andReturn($context);
+        $service->shouldReceive('getConfiguration')->andReturn($config);
+        $service->shouldReceive('getMetadataProvider')->andReturn($metaProv);
+
+        $remix = UriProcessorNew::process($service);
+        dd($remix);
+    }
 }
