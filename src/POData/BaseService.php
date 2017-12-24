@@ -2,6 +2,7 @@
 
 namespace POData;
 
+use POData\BatchProcessor\BatchProcessor;
 use POData\Common\ErrorHandler;
 use POData\Common\HttpStatus;
 use POData\Common\Messages;
@@ -245,15 +246,40 @@ abstract class BaseService implements IRequestHandler, IService
         try {
             $this->createProviders();
             $this->getHost()->validateQueryParameters();
-
             $uriProcessor = UriProcessorNew::process($this);
             $request = $uriProcessor->getRequest();
-            $this->serializeResult($request, $uriProcessor);
+            if (TargetKind::BATCH() == $request->getTargetKind()) {
+                //dd($request);
+                $this->getProvidersWrapper()->startTransaction();
+                try {
+                    $this->handleBatchRequest($request);
+                } catch (\Exception $ex) {
+                    $this->getProvidersWrapper()->rollBackTransaction();
+                    throw $ex;
+                }
+                $this->getProvidersWrapper()->commitTransaction();
+            } else {
+                $this->serializeResult($request, $uriProcessor);
+            }
         } catch (\Exception $exception) {
             ErrorHandler::handleException($exception, $this);
             // Return to dispatcher for writing serialized exception
             return;
         }
+    }
+
+    private function handleBatchRequest($request)
+    {
+        $cloneThis = clone $this;
+        $batchProcessor = new BatchProcessor($cloneThis, $request);
+        $batchProcessor->handleBatch();
+        $response = $batchProcessor->getResponse();
+        $this->getHost()->setResponseStatusCode(HttpStatus::CODE_ACCEPTED);
+        $this->getHost()->setResponseContentType('multipart/mixed; boundary=' . $batchProcessor->getBoundary());
+        // Hack: this needs to be sorted out in the future as we hookup other versions.
+        $this->getHost()->setResponseVersion('3.0;');
+        $this->getHost()->setResponseCacheControl(ODataConstants::HTTPRESPONSE_HEADER_CACHECONTROL_NOCACHE);
+        $this->getHost()->getOperationContext()->outgoingResponse()->setStream($response);
     }
 
     /**
@@ -402,8 +428,9 @@ abstract class BaseService implements IRequestHandler, IService
             $targetResourceType = $request->getTargetResourceType();
             assert(null != $targetResourceType, 'Target resource type cannot be null');
 
-            $method = (HTTPRequestMethod::POST() != $method);
-            if (!$request->isSingleResult() && $method) {
+            $methodIsNotPost = (HTTPRequestMethod::POST() != $method);
+            $methodIsNotDelete = (HTTPRequestMethod::DELETE() != $method);
+            if (!$request->isSingleResult() && $methodIsNotPost) {
                 // Code path for collection (feed or links)
                 $entryObjects = $request->getTargetResult();
                 assert($entryObjects instanceof QueryResult, '!$entryObjects instanceof QueryResult');
@@ -433,10 +460,12 @@ abstract class BaseService implements IRequestHandler, IService
                 if ($request->isLinkUri()) {
                     // In the query 'Orders(1245)/$links/Customer', the targeted
                     // Customer might be null
-                    if (null === $result->results) {
+                    if (null === $result->results && $methodIsNotPost && $methodIsNotDelete) {
                         throw ODataException::createResourceNotFoundError($request->getIdentifier());
                     }
-                    $odataModelInstance = $objectModelSerializer->writeUrlElement($result);
+                    if ($methodIsNotPost && $methodIsNotDelete) {
+                        $odataModelInstance = $objectModelSerializer->writeUrlElement($result);
+                    }
                 } elseif (TargetKind::RESOURCE() == $requestTargetKind
                           || TargetKind::SINGLETON() == $requestTargetKind) {
                     if (null !== $this->getHost()->getRequestIfMatch()
