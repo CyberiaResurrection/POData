@@ -457,6 +457,116 @@ class SerialiserWriteElementsTest extends SerialiserTestBase
         $this->assertEquals($objectResult, $ironicResult);
     }
 
+    public function testWriteTopLevelElementsAllEmptyExpandedSets()
+    {
+        $known = Carbon::create(2017, 1, 1, 0, 0, 0, 'UTC');
+        Carbon::setTestNow($known);
+
+        $request = $this->setUpRequest();
+        $request->shouldReceive('prepareRequestUri')->andReturn('/odata.svc/Customers?$expand=Orders');
+        $request->shouldReceive('fullUrl')->andReturn('http://localhost/odata.svc/Customers?$expand=Orders');
+
+        list($host, $meta, $query) = $this->setUpDataServiceDeps($request);
+
+        // default data service
+        list($object, $ironic) = $this->setUpSerialisers($query, $meta, $host);
+
+        $order = new Order2();
+        $order->OrderID = 1;
+        $order->ProductID = 42;
+
+        $model = new Customer2();
+        $model->CustomerID = 1;
+        $model->CustomerGuid = '123e4567-e89b-12d3-a456-426655440000';
+        $model->Orders = null;
+
+        $results = [new QueryResult(), new QueryResult()];
+        $results[0]->results = $model;
+        $results[1]->results = $model;
+
+        $collection = new QueryResult();
+        $collection->results = $results;
+
+        $expandNode = m::mock(ExpandedProjectionNode::class);
+        $expandNode->shouldReceive('canSelectAllProperties')->andReturn(true);
+        $expandNode->shouldReceive('isExpansionSpecified')->andReturn(false);
+        $expandNode->shouldReceive('findNode')->andReturn(null);
+
+        $node = m::mock(RootProjectionNode::class);
+        $node->shouldReceive('getPropertyName')->andReturn('Orders');
+        $node->shouldReceive('isExpansionSpecified')->andReturn(true, true, true, false);
+        $node->shouldReceive('canSelectAllProperties')->andReturn(true);
+        $node->shouldReceive('findNode')->andReturn($expandNode);
+
+        $ironic->getRequest()->setRootProjectionNode($node);
+
+        $selfLink = new ODataLink();
+        $selfLink->name = 'self';
+        $selfLink->title = 'Customers';
+        $selfLink->url = 'Customers';
+
+        $subLinks = [new ODataLink(), new ODataLink()];
+        $subLinks[0]->name = 'http://schemas.microsoft.com/ado/2007/08/dataservices/related/Customer';
+        $subLinks[0]->title = 'Customer';
+        $subLinks[0]->type = 'application/atom+xml;type=entry';
+        $subLinks[0]->url = 'Orders(OrderID=1)/Customer';
+        $subLinks[1]->name = 'http://schemas.microsoft.com/ado/2007/08/dataservices/related/Order_Details';
+        $subLinks[1]->title = 'Order_Details';
+        $subLinks[1]->type = 'application/atom+xml;type=feed';
+        $subLinks[1]->url = 'Orders(OrderID=1)/Order_Details';
+
+        $subSelf = new ODataLink();
+        $subSelf->name = 'self';
+        $subSelf->title = 'Orders';
+        $subSelf->url = 'Customers(CustomerID=\'1\',CustomerGuid=guid\'123e4567-e89b-12d3-a456-426655440000\')/Orders';
+
+        $subFeed = new ODataFeed();
+        $subFeed->id = 'http://localhost/odata.svc/Customers(CustomerID=\'1\',CustomerGuid'
+                       .'=guid\'123e4567-e89b-12d3-a456-426655440000\')/Orders';
+        $subFeed->title = new ODataTitle('Orders');
+        $subFeed->selfLink = $subSelf;
+        $subFeed->entries = null;
+        $subFeed->updated = '2017-01-01T00:00:00+00:00';
+
+        $link = new ODataLink();
+        $link->name = 'http://schemas.microsoft.com/ado/2007/08/dataservices/related/Orders';
+        $link->title = 'Orders';
+        $link->type = 'application/atom+xml;type=feed';
+        $link->url = 'Customers(CustomerID=\'1\',CustomerGuid=guid\'123e4567-e89b-12d3-a456-426655440000\')/Orders';
+        $link->isCollection = true;
+        $link->isExpanded = true;
+        $link->expandedResult = $subFeed;
+
+        $entry = new ODataEntry();
+        $entry->id = 'http://localhost/odata.svc/Customers(CustomerID=\'1\',CustomerGuid'
+                     .'=guid\'123e4567-e89b-12d3-a456-426655440000\')';
+        $entry->title = new ODataTitle('Customer');
+        $entry->editLink = new ODataLink();
+        $entry->editLink->url = 'Customers(CustomerID=\'1\',CustomerGuid=guid\'123e4567-e89b-12d3-a456-426655440000\')';
+        $entry->editLink->name = 'edit';
+        $entry->editLink->title = 'Customer';
+        $entry->type = new ODataCategory('Customer');
+        $entry->resourceSetName = 'Customers';
+        $entry->propertyContent = $this->generateCustomerProperties();
+        $entry->propertyContent->properties['CustomerID']->value = '1';
+        $entry->propertyContent->properties['CustomerGuid']->value = '123e4567-e89b-12d3-a456-426655440000';
+        $entry->links = [$link];
+        $entry->updated = '2017-01-01T00:00:00+00:00';
+
+        $objectResult = new ODataFeed();
+        $objectResult->id = 'http://localhost/odata.svc/Customers';
+        $objectResult->title = new ODataTitle('Customers');
+        $objectResult->selfLink = $selfLink;
+        $objectResult->entries = [$entry, $entry];
+        $objectResult->updated = '2017-01-01T00:00:00+00:00';
+        $objectResult->baseURI = 'http://localhost/odata.svc/';
+
+        $ironicResult = $ironic->writeTopLevelElements($collection);
+
+        $this->assertEquals(get_class($objectResult), get_class($ironicResult));
+        $this->assertEquals($objectResult, $ironicResult);
+    }
+
     public function testWriteTopLevelElementsWithEmptyArrayPayloadAndHasMore()
     {
         $known = Carbon::create(2017, 1, 1, 0, 0, 0, 'UTC');
