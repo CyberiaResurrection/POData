@@ -545,8 +545,7 @@ class SerialiserWriteElementTest extends SerialiserTestBase
         $managerLink2->type = 'application/atom+xml;type=feed';
         $managerLink2->url = 'Employees(EmployeeID=\'Cave+Johnson\')/Subordinates';
         $managerLink2->isCollection = true;
-        $managerLink2->isExpanded = false;
-
+        $managerLink2->isExpanded = true;
 
         $manager = new ODataEntry();
         $manager->id = 'http://localhost/odata.svc/Employees(EmployeeID=\'Cave+Johnson\')';
