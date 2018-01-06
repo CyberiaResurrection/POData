@@ -639,6 +639,9 @@ class SerialiserWriteElementsTest extends SerialiserTestBase
 
     public function testWriteNullTopLevelElements()
     {
+        $known = Carbon::create(2017, 1, 1, 0, 0, 0, 'UTC');
+        Carbon::setTestNow($known);
+
         $request = $this->setUpRequest();
         $request->shouldReceive('prepareRequestUri')->andReturn('/odata.svc/Customers');
         $request->shouldReceive('fullUrl')->andReturn('http://localhost/odata.svc/Customers');
