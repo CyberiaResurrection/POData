@@ -298,4 +298,15 @@ class ODataEntry
 
         return true;
     }
+
+    public static function getEmptyEntry()
+    {
+        $entry = new ODataEntry();
+        $entry->title = new ODataTitle('');
+        $entry->editLink = new ODataURL();
+        $entry->type = new ODataCategory('');
+        $entry->propertyContent = new ODataPropertyContent();
+
+        return $entry;
+    }
 }

@@ -8,6 +8,7 @@ use POData\Common\MimeTypes;
 use POData\Common\ODataConstants;
 use POData\Common\ODataException;
 use POData\Common\Version;
+use POData\ObjectModel\CynicDeserialiser;
 use POData\ObjectModel\ODataBagContent;
 use POData\ObjectModel\ODataCategory;
 use POData\ObjectModel\ODataEntry;
@@ -1376,24 +1377,25 @@ xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
 
     public function testWriteEmptyODataEntry()
     {
-        $entry = new ODataEntry();
-        $entry->resourceSetName = 'Foobars';
+        $entry = ODataEntry::getEmptyEntry();
 
         $foo = new AtomODataWriterDummy('http://localhost/odata.svc');
-
-        $actual = $foo->write($entry)->getOutput();
-        $expected = '<link rel="edit" title="" href=""/>';
-        $this->assertTrue(false !== strpos($actual, $expected));
-        $expected = '<m:properties/>';
-        $this->assertTrue(false !== strpos($actual, $expected));
+        $foo->write($entry);
+        $result = $foo->getOutput();
+        $this->assertTrue(false !== strpos($result, '<link rel="edit" title="" href=""/>'));
+        $this->assertTrue(false !== strpos($result, '<m:properties/>'));
+        $this->assertTrue(false !== strpos($result, '<title type="text"></title>'));
+        $this->assertTrue(
+            false !== strpos(
+                $result,
+                '<category term="" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme"/>'
+            )
+        );
     }
 
     public function testWriteEmptyODataFeed()
     {
-        $feed = new ODataFeed();
-        $feed->id = 'http://localhost/odata.svc/feedID';
-        $feed->title = 'title';
-        $feed->selfLink = new ODataLink();
+        $feed = ODataFeed::getEmptyFeed();
         $feed->selfLink->name = ODataConstants::ATOM_SELF_RELATION_ATTRIBUTE_VALUE;
         $feed->selfLink->title = 'Feed Title';
         $feed->selfLink->url = 'feedID';
@@ -1404,5 +1406,10 @@ xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
         $this->assertTrue(false !== strpos($actual, $expected));
         $expected = '<m:properties/>';
         $this->assertTrue(false === strpos($actual, $expected));
+
+        $foo->write($feed);
+        $result = $foo->getOutput();
+        $this->assertTrue(false !== strpos($result, '<title type="text"></title>'));
+        $this->assertTrue(false !== strpos($result, '<link rel="" href=""/>'));
     }
 }

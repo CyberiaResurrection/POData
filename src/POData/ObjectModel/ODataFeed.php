@@ -93,4 +93,13 @@ class ODataFeed
     {
         $this->entries = $entries;
     }
+
+    public static function getEmptyFeed()
+    {
+        $feed = new ODataFeed();
+        $feed->title = new ODataTitle('');
+        $feed->selfLink = new ODataLink();
+
+        return $feed;
+    }
 }
