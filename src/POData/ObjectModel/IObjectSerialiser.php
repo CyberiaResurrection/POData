@@ -62,7 +62,11 @@ interface IObjectSerialiser
      *
      * @return ODataPropertyContent
      */
-    public function writeTopLevelComplexObject(QueryResult &$complexValue, $propertyName, ResourceType &$resourceType);
+    public function writeTopLevelComplexObject(
+        QueryResult &$complexValue,
+        string $propertyName,
+        ResourceType &$resourceType
+    );
 
     /**
      * Write top level bag resource.
@@ -73,7 +77,7 @@ interface IObjectSerialiser
      * @return ODataPropertyContent
      * @internal param QueryResult $BagValue Results property contains the bag object to be written
      */
-    public function writeTopLevelBagObject(QueryResult &$bagValue, $propertyName, ResourceType &$resourceType);
+    public function writeTopLevelBagObject(QueryResult &$bagValue, string $propertyName, ResourceType &$resourceType);
 
     /**
      * Write top level primitive value.

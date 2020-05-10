@@ -90,6 +90,12 @@ class ObjectModelSerializerTest extends TestCase
         $this->assertTrue(is_object($foo));
     }
 
+    /**
+     * @throws InvalidOperationException
+     * @throws ODataException
+     * @throws \POData\Common\UrlFormatException
+     * @throws \ReflectionException
+     */
     public function testwriteTopLevelElement()
     {
         $foo                    = $this->Construct();
@@ -120,6 +126,7 @@ class ObjectModelSerializerTest extends TestCase
 
         $keysProperty = ['name' => $resourceProperty, 'type'=>$resourceProperty2];
         $mockResourceType->shouldReceive('getKeyProperties')->andReturn($keysProperty);
+        $mockResourceType->shouldReceive('getFullName')->andReturn('Entity');
 
         $mockResourceType->shouldReceive('getResourceTypeKind')->andReturn(ResourceTypeKind::ENTITY());
         $mockResourceSetWrapper->shouldReceive('getName')->andReturn('Entity');
@@ -139,6 +146,11 @@ class ObjectModelSerializerTest extends TestCase
         $this->assertEquals('Entity', $ret->resourceSetName);
     }
 
+    /**
+     * @throws InvalidOperationException
+     * @throws ODataException
+     * @throws \POData\Common\UrlFormatException
+     */
     public function testwriteTopLevelElementsWithoutHasMore()
     {
         $foo           = $this->Construct();
@@ -185,6 +197,7 @@ class ObjectModelSerializerTest extends TestCase
 
         $keysProperty = ['name' => $resourceProperty, 'type'=>$resourceProperty2];
         $mockResourceType->shouldReceive('getKeyProperties')->andReturn($keysProperty);
+        $mockResourceType->shouldReceive('getFullName')->andReturn('Entity');
 
         $mockResourceType->shouldReceive('getResourceTypeKind')->andReturn(ResourceTypeKind::ENTITY());
         $mockResourceSet->shouldReceive('getName')->andReturn('Entity');
@@ -237,6 +250,11 @@ class ObjectModelSerializerTest extends TestCase
         $this->assertTrue($ret->entries[1]->propertyContent instanceof \POData\ObjectModel\ODataPropertyContent);
     }
 
+    /**
+     * @throws InvalidOperationException
+     * @throws ODataException
+     * @throws \POData\Common\UrlFormatException
+     */
     public function testwriteTopLevelElementsOnly()
     {
         $foo           = $this->Construct();
@@ -286,6 +304,7 @@ class ObjectModelSerializerTest extends TestCase
 
         $keysProperty = ['name' => $resourceProperty, 'type'=>$resourceProperty2];
         $mockResourceType->shouldReceive('getKeyProperties')->andReturn($keysProperty);
+        $mockResourceType->shouldReceive('getFullName')->andReturn('Entity');
 
         $mockResourceType->shouldReceive('getResourceTypeKind')->andReturn(ResourceTypeKind::ENTITY());
         $mockResourceSetWrapper->shouldReceive('getName')->andReturn('Entity');

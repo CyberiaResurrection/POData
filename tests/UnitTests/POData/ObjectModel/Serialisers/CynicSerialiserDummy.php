@@ -14,7 +14,7 @@ class CynicSerialiserDummy extends CynicSerialiser
         return parent::getCurrentExpandedProjectionNode();
     }
 
-    public function shouldExpandSegment($navigationPropertyName): bool
+    public function shouldExpandSegment(string $navigationPropertyName): bool
     {
         return parent::shouldExpandSegment($navigationPropertyName);
     }
@@ -24,7 +24,7 @@ class CynicSerialiserDummy extends CynicSerialiser
         return parent::getProjectionNodes();
     }
 
-    public function needNextPageLink($resultSetCount): bool
+    public function needNextPageLink(int $resultSetCount): bool
     {
         return parent::needNextPageLink($resultSetCount);
     }
