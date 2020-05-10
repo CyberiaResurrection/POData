@@ -8,6 +8,7 @@ use POData\Common\InvalidOperationException;
 use POData\Common\Messages;
 use POData\Common\ODataConstants;
 use POData\Common\ODataException;
+use POData\Configuration\IServiceConfiguration;
 use POData\IService;
 use POData\Providers\Metadata\ResourceComplexType;
 use POData\Providers\Metadata\ResourceEntityType;
@@ -124,7 +125,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataFeed
      */
-    public function writeTopLevelElements(QueryResult &$entryObjects)
+    public function writeTopLevelElements(QueryResult &$entryObjects): ODataFeed
     {
         $results = $entryObjects->results;
         if (!is_array($results)) {
@@ -179,7 +180,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return void
      */
-    private function loadStackIfEmpty()
+    private function loadStackIfEmpty(): void
     {
         if (0 == count($this->lightStack)) {
             $typeName = $this->getRequest()->getTargetResourceType()->getName();
@@ -192,10 +193,8 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return RequestDescription
      */
-    public function getRequest()
+    public function getRequest(): RequestDescription
     {
-        assert(null !== $this->request, 'Request not yet set');
-
         return $this->request;
     }
 
@@ -204,7 +203,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @param RequestDescription $request
      */
-    public function setRequest(RequestDescription $request)
+    public function setRequest(RequestDescription $request): void
     {
         $this->request = $request;
         $this->stack->setRequest($request);
@@ -215,7 +214,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return \DateTime
      */
-    public function getUpdated()
+    public function getUpdated(): \DateTime
     {
         return $this->updated;
     }
@@ -230,7 +229,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataEntry|null
      */
-    public function writeTopLevelElement(QueryResult $entryObject)
+    public function writeTopLevelElement(QueryResult $entryObject): ?ODataEntry
     {
         if (!isset($entryObject->results)) {
             array_pop($this->lightStack);
@@ -370,7 +369,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return IService
      */
-    public function getService()
+    public function getService(): IService
     {
         return $this->service;
     }
@@ -380,7 +379,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @param IService $service
      */
-    public function setService(IService $service)
+    public function setService(IService $service): void
     {
         $this->service                     = $service;
         $this->absoluteServiceUri          = $service->getHost()->getAbsoluteServiceUri()->getUrlAsString();
@@ -398,7 +397,7 @@ class CynicSerialiser implements IObjectSerialiser
      *                                                        non-null only the properties described by the returned
      *                                                        projection segments should be serialized
      */
-    protected function getProjectionNodes()
+    protected function getProjectionNodes(): ?array
     {
         $expandedProjectionNode = $this->getCurrentExpandedProjectionNode();
         if (null === $expandedProjectionNode || $expandedProjectionNode->canSelectAllProperties()) {
@@ -415,7 +414,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return RootProjectionNode|ExpandedProjectionNode|null
      */
-    protected function getCurrentExpandedProjectionNode()
+    protected function getCurrentExpandedProjectionNode(): ?ProjectionNode
     {
         $expandedProjectionNode = $this->getRequest()->getRootProjectionNode();
         if (null === $expandedProjectionNode) {
@@ -451,7 +450,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return SegmentStack
      */
-    public function getStack()
+    public function getStack(): SegmentStack
     {
         return $this->stack;
     }
@@ -464,7 +463,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws ODataException
      * @return string
      */
-    protected function getEntryInstanceKey($entityInstance, ResourceType $resourceType, $containerName)
+    protected function getEntryInstanceKey($entityInstance, ResourceType $resourceType, $containerName): string
     {
         assert(is_object($entityInstance));
         $typeName      = $resourceType->getName();
@@ -500,7 +499,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return array<ODataMediaLink|array|null>
      */
-    protected function writeMediaData($entryObject, $type, $relativeUri, ResourceType $resourceType)
+    protected function writeMediaData($entryObject, $type, $relativeUri, ResourceType $resourceType): array
     {
         $context               = $this->getService()->getOperationContext();
         $streamProviderWrapper = $this->getService()->getStreamProviderWrapper();
@@ -548,7 +547,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataPropertyContent
      */
-    private function writeProperties($entryObject, $nonRelProp)
+    private function writeProperties($entryObject, $nonRelProp): ODataPropertyContent
     {
         $propertyContent = new ODataPropertyContent();
         foreach ($nonRelProp as $corn => $flake) {
@@ -591,7 +590,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataBagContent|null
      */
-    protected function writeBagValue(ResourceType &$resourceType, $result)
+    protected function writeBagValue(ResourceType &$resourceType, $result): ?ODataBagContent
     {
         $bagNullOrArray = null === $result || is_array($result);
         if (!$bagNullOrArray) {
@@ -635,7 +634,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return string
      */
-    private function primitiveToString(IType &$type, $primitiveValue)
+    private function primitiveToString(IType &$type, $primitiveValue): string
     {
         if ($type instanceof Boolean) {
             $stringValue = (true === $primitiveValue) ? 'true' : 'false';
@@ -661,8 +660,11 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataPropertyContent
      */
-    protected function writeComplexValue(ResourceType &$resourceType, &$result, $propertyName = null)
-    {
+    protected function writeComplexValue(
+        ResourceType &$resourceType,
+        &$result,
+        $propertyName = null
+    ): ODataPropertyContent {
         assert(is_object($result), 'Supplied $customObject must be an object');
 
         $count = count($this->complexTypeInstanceCollection);
@@ -742,7 +744,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return bool                      True if the given navigation should be expanded, otherwise false
      */
-    protected function shouldExpandSegment($navigationPropertyName)
+    protected function shouldExpandSegment($navigationPropertyName): bool
     {
         $expandedProjectionNode = $this->getCurrentExpandedProjectionNode();
         if (null === $expandedProjectionNode) {
@@ -828,7 +830,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return string                    for the link for next page
      */
-    protected function getNextLinkUri($lastObject)
+    protected function getNextLinkUri($lastObject): string
     {
         $currentExpandedProjectionNode = $this->getCurrentExpandedProjectionNode();
         $internalOrderByInfo           = $currentExpandedProjectionNode->getInternalOrderByInfo();
@@ -855,7 +857,7 @@ class CynicSerialiser implements IObjectSerialiser
      *                     is no query parameters
      *                     required for the next link of top level result set
      */
-    protected function getNextPageLinkQueryParametersForRootResourceSet()
+    protected function getNextPageLinkQueryParametersForRootResourceSet(): ?string
     {
         $queryParameterString = null;
         foreach ([ODataConstants::HTTPQUERY_STRING_FILTER,
@@ -903,7 +905,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataURLCollection
      */
-    public function writeUrlElements(QueryResult $entryObjects)
+    public function writeUrlElements(QueryResult $entryObjects): ODataURLCollection
     {
         $urls = new ODataURLCollection();
         if (!empty($entryObjects->results)) {
@@ -947,7 +949,7 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws ODataException
      * @return ODataURL
      */
-    public function writeUrlElement(QueryResult $entryObject)
+    public function writeUrlElement(QueryResult $entryObject): ODataURL
     {
         $url = new ODataURL();
 
@@ -972,7 +974,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return ResourceSetWrapper
      */
-    protected function getCurrentResourceSetWrapper()
+    protected function getCurrentResourceSetWrapper(): ResourceSetWrapper
     {
         $segmentWrappers = $this->getStack()->getSegmentWrappers();
         $count           = count($segmentWrappers);
@@ -991,8 +993,11 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataPropertyContent
      */
-    public function writeTopLevelComplexObject(QueryResult &$complexValue, $propertyName, ResourceType &$resourceType)
-    {
+    public function writeTopLevelComplexObject(
+        QueryResult &$complexValue,
+        $propertyName,
+        ResourceType &$resourceType
+    ): ODataPropertyContent {
         $result = $complexValue->results;
 
         $propertyContent         = new ODataPropertyContent();
@@ -1023,8 +1028,11 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataPropertyContent
      */
-    public function writeTopLevelBagObject(QueryResult &$bagValue, $propertyName, ResourceType &$resourceType)
-    {
+    public function writeTopLevelBagObject(
+        QueryResult &$bagValue,
+        $propertyName,
+        ResourceType &$resourceType
+    ): ODataPropertyContent {
         $result = $bagValue->results;
 
         $propertyContent         = new ODataPropertyContent();
@@ -1048,8 +1056,10 @@ class CynicSerialiser implements IObjectSerialiser
      * @throws InvalidOperationException
      * @return ODataPropertyContent
      */
-    public function writeTopLevelPrimitive(QueryResult &$primitiveValue, ResourceProperty &$resourceProperty = null)
-    {
+    public function writeTopLevelPrimitive(
+        QueryResult &$primitiveValue,
+        ResourceProperty &$resourceProperty = null
+    ): ODataPropertyContent {
         if (null === $resourceProperty) {
             throw new InvalidOperationException('Resource property must not be null');
         }
@@ -1084,7 +1094,7 @@ class CynicSerialiser implements IObjectSerialiser
      *
      * @return bool true if the feed must have a next page link
      */
-    protected function needNextPageLink($resultSetCount)
+    protected function needNextPageLink($resultSetCount): bool
     {
         $currentResourceSet = $this->getCurrentResourceSetWrapper();
         $recursionLevel     = count($this->getStack()->getSegmentNames());

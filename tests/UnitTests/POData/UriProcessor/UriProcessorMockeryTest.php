@@ -2312,6 +2312,12 @@ class UriProcessorMockeryTest extends TestCase
         $this->assertEquals('Hammer, M.C.', $rebar->getName());
     }
 
+    /**
+     * @throws InvalidOperationException
+     * @throws ODataException
+     * @throws \POData\Common\UrlFormatException
+     * @throws \ReflectionException
+     */
     public function testIntegrationWithJustASingleton()
     {
         $hostInfo = [
@@ -2327,7 +2333,7 @@ class UriProcessorMockeryTest extends TestCase
         $queryResult->results = 'fnord';
 
         $cereal = m::mock(ObjectModelSerializer::class)->makePartial();
-        $cereal->shouldReceive('writeTopLevelElement')->andReturn('fnord');
+        $cereal->shouldReceive('writeTopLevelElement')->andReturn(null);
         $cereal->shouldReceive('setRequest')->andReturnNull()->once();
         $host = new ServiceHostTestFake($hostInfo);
         $db   = m::mock(IQueryProvider::class);

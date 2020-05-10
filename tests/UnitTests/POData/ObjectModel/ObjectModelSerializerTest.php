@@ -19,6 +19,7 @@ use POData\ObjectModel\ODataLink;
 use POData\ObjectModel\ODataProperty;
 use POData\ObjectModel\ODataPropertyContent;
 use POData\ObjectModel\ODataTitle;
+use POData\ObjectModel\ODataURL;
 use POData\OperationContext\IOperationContext;
 use POData\Providers\Metadata\IMetadataProvider;
 use POData\Providers\Metadata\ResourcePrimitiveType;
@@ -646,9 +647,14 @@ class ObjectModelSerializerTest extends TestCase
         $queryResult->results = [$supplier, $customer];
         $queryResult->hasMore = true;
 
+        $suppUrl = new ODataURL();
+        $suppUrl->url = '/supplier';
+        $custUrl = new ODataURL();
+        $custUrl->url = '/customer';
+
         $foo = m::mock(ObjectModelSerializer::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $foo->shouldReceive('writeUrlElement')->withArgs([$supplier])->andReturn('/supplier')->once();
-        $foo->shouldReceive('writeUrlElement')->withArgs([$customer])->andReturn('/customer')->once();
+        $foo->shouldReceive('writeUrlElement')->withArgs([$supplier])->andReturn($suppUrl)->once();
+        $foo->shouldReceive('writeUrlElement')->withArgs([$customer])->andReturn($custUrl)->once();
         $foo->shouldReceive('getStack->getSegmentWrappers')->andReturn([]);
         $foo->shouldReceive('getRequest')->andReturn($this->mockRequest);
         $foo->shouldReceive('needNextPageLink')->andReturn(true)->never();

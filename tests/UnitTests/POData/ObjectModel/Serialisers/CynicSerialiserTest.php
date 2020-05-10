@@ -70,7 +70,7 @@ class CynicSerialiserTest extends SerialiserTestBase
         $request->shouldReceive('getRootProjectionNode')->andReturn($node)->once();
 
         $foo = new CynicSerialiserDummy($mockService, $request);
-        $this->assertNull($foo->getProjectionNodes());
+        $this->assertEquals(null, $foo->getProjectionNodes());
     }
 
     public function testGetProjectionNodesSonethingToReturn()
